@@ -69,7 +69,7 @@ class Analyzer:
         self.use_default_heuristic = use_default_heuristic
         self.testing = testing
         self.relu_groups = []
-
+        self.disjunction = True
     
     def __del__(self):
         elina_manager_free(self.man)
@@ -134,6 +134,11 @@ class Analyzer:
 
 
         if self.output_constraints is None:
+            if self.disjunction :
+                for i in range(output_size):
+                    for j in range(output_size):
+                        print("{} > {} : {}".format(i, j, self.is_greater(self.man, element, i, j,self.use_default_heuristic)))
+            
             for i in range(output_size):
                 flag = True
                 label = i
@@ -144,7 +149,6 @@ class Analyzer:
                             break
                     else:
                         if label!=j and not self.is_greater(self.man, element, label, j, self.use_default_heuristic):
-
                             if(self.domain=='refinepoly'):
                                 obj = LinExpr()
                                 obj += 1*var_list[counter+label]
@@ -153,7 +157,7 @@ class Analyzer:
                                 model.optimize()
                                 if model.Status!=2:
                                     model.write("final.mps")
-                                    print (f"Model failed to solve, {model.Status}")
+                                    print("Model failed to solve, {model.Status}")
                                     flag = False
                                     break
                                 elif(model.objval<0):

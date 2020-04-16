@@ -584,7 +584,7 @@ def get_bounds_for_layer_with_milp(nn, LB_N0, UB_N0, layerno, abs_layer_count, o
 
     for j in range(len(resl)):
         if (resl[j]>resu[j]):
-            print (f"unsound {j}")
+            print ("unsound {j}")
             resl[j], resu[j] = nlb[j], nub[j]
 
     return resl, resu, sorted(indices)
