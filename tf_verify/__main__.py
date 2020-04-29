@@ -53,7 +53,13 @@ def parse_input_box(text):
     # return every combination
     boxes = itertools.product(*intervals_list)
     return boxes
-
+def parse_input_box_cons(text):
+    interval_list = []
+    for line in text.split('\n'):
+        if len(line) > 0:
+            [lb,ub] = line.split(" ")
+            interval_list.append((np.double(lb), np.double(ub)))
+    return interval_list
 
 def show_ascii_spec(lb, ub, n_rows, n_cols, n_channels):
     print('==================================================================')
@@ -191,6 +197,9 @@ parser.add_argument('--output_constraints', default=config.output_constraints, h
 parser.add_argument('--logdir', type=str, default=None, help='Location to save logs to. If not specified, logs are not saved and emitted to stdout')
 parser.add_argument('--logname', type=str, default=None, help='Directory of log files in `logdir`, if not specified timestamp is used')
 
+parser.add_argument('--input_box_cons', type=str, default=None, help='Path to box constraints on the input layer')
+parser.add_argument('--relation_diagram', type=str, default=None, help='Path to the hasse diagram of variables constraintables in the output layer')
+
 
 args = parser.parse_args()
 for k, v in vars(args).items():
@@ -236,7 +245,7 @@ elif not config.geometric:
 dataset = config.dataset
 
 if zonotope_bool==False:
-   assert dataset in ['mnist', 'cifar10', 'acasxu', 'fashion'], "only mnist, cifar10, acasxu, and fashion datasets are supported"
+   assert dataset in ['race-track', 'mnist', 'cifar10', 'acasxu', 'fashion'], "only race-track mnist, cifar10, acasxu, and fashion datasets are supported"
 
 constraints = None
 if config.output_constraints:
@@ -285,6 +294,8 @@ else:
         num_pixels = 3072
     elif(dataset=='acasxu'):
         num_pixels = 5
+    elif(dataset=='race-track'):
+        num_pixels = 14
     if is_onnx:
         model, is_conv = read_onnx_net(netname)
         # this is to have different defaults for mnist and cifar10
@@ -299,6 +310,9 @@ if not is_trained_with_pytorch:
     elif dataset == 'acasxu':
         means = [1.9791091e+04,0.0,0.0,650.0,600.0]
         stds = [60261.0,6.28318530718,6.28318530718,1100.0,1200.0]
+    elif dataset == 'race-track':
+        meads = [0]
+        stds = [1]
     else:
         means = [0.5, 0.5, 0.5]
         stds = [1, 1, 1]
@@ -314,7 +328,9 @@ verified_images = 0
 
 
 if dataset:
-    if config.input_box is None:
+    if dataset == 'race-track':
+        test = open(config.input_box_cons, 'r').read()
+    elif config.input_box is None:
         tests = get_tests(dataset, config.geometric)
     else:
         tests = open(config.input_box, 'r').read()
@@ -406,7 +422,6 @@ elif zonotope_bool:
             print("Failed")
     else:
          print("Failed")
-
 
 elif config.geometric:
     from geometric_constraints import *
@@ -607,7 +622,6 @@ elif config.geometric:
             print('Verified[box]: {}, Verified[poly]: {}, CEX found: {}'.format(ok_box, ok_poly, cex_found))
             assert not cex_found or not ok_box, 'ERROR! Found counter-example, but image was verified with box!'
             assert not cex_found or not ok_poly, 'ERROR! Found counter-example, but image was verified with poly!'
-
 
     else:
         for i, test in enumerate(tests):
@@ -815,6 +829,14 @@ elif config.geometric:
     print('[Box]  Average chunks verified: %.2f percent' % (100.0 * np.mean(cver_box)))
     print('[Poly]  Average chunks verified: %.2f percent' % (100.0 * np.mean(cver_poly)))
     print('Average time: ', tot_time / total)
+
+elif dataset == "race-track":
+    boxs = parse_input_box_cons(test)
+    specLB = [interval[0] for interval in boxs]
+    specUB = [interval[1] for interval in boxs]
+    perturbed_label, _, nlb, nub = eran.analyze_box(specLB, specUB, domain, config.timeout_lp, config.timeout_milp,
+                                                    config.use_default_heuristic)
+
 else:
     for i, test in enumerate(tests):
         if config.from_test and i < config.from_test:

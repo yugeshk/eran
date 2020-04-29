@@ -8,6 +8,7 @@ from deeppoly_nodes import *
 from deepzono_nodes import *
 from functools import reduce
 import gc
+from config import config
 
 class layers:
     def __init__(self):
@@ -69,8 +70,7 @@ class Analyzer:
         self.use_default_heuristic = use_default_heuristic
         self.testing = testing
         self.relu_groups = []
-        self.disjunction = True
-    
+
     def __del__(self):
         elina_manager_free(self.man)
         
@@ -134,11 +134,18 @@ class Analyzer:
 
 
         if self.output_constraints is None:
-            if self.disjunction :
+            if config.dataset == "race-track":
+                file = open(config.relation_diagram,'w')
+                file.write("{}\n".format(output_size))
+
                 for i in range(output_size):
                     for j in range(output_size):
-                        print("{} > {} : {}".format(i, j, self.is_greater(self.man, element, i, j,self.use_default_heuristic)))
-            
+                        if i != j :
+                            le = not (self.is_greater(self.man, element, i, j,self.use_default_heuristic))
+                            print("{} < {} : {}".format(i, j, le))
+                            if le :
+                                file.write("{} {}\n".format(i,j))
+
             for i in range(output_size):
                 flag = True
                 label = i
