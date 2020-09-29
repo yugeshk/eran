@@ -195,4 +195,13 @@ class Analyzer:
                     break
 
         elina_abstract0_free(self.man, element)
+
+        if (config.output_bound):
+            file = open(config.output_bound,"w")
+            assert output_size == len(nlb[-1])
+            assert output_size == len(nub[-1])
+            file.write("{}\n".format(output_size))
+            for i in range(output_size):
+                file.write("{} {}\n".format(nlb[-1][i],nub[-1][i]))
+                print("test --- {} {}".format(nlb[-1][i],nub[-1][i]))
         return dominant_class, nlb, nub

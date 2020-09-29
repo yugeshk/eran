@@ -199,6 +199,7 @@ parser.add_argument('--logname', type=str, default=None, help='Directory of log 
 
 parser.add_argument('--input_box_cons', type=str, default=None, help='Path to box constraints on the input layer')
 parser.add_argument('--relation_diagram', type=str, default=None, help='Path to the hasse diagram of variables constraintables in the output layer')
+parser.add_argument('--output_bound', type=str, default=None, help='Path to a text file. Store lower and upper bound for neurons in the output layer to this file')
 
 
 args = parser.parse_args()
@@ -836,7 +837,6 @@ elif dataset == "race-track":
     specUB = [interval[1] for interval in boxs]
     perturbed_label, _, nlb, nub = eran.analyze_box(specLB, specUB, domain, config.timeout_lp, config.timeout_milp,
                                                     config.use_default_heuristic)
-
 else:
     for i, test in enumerate(tests):
         if config.from_test and i < config.from_test:
